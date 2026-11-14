@@ -1,0 +1,542 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lean-Out 20</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column log; summary strip, bodyweight chart, 20-week grid, then the selected week's checklist and lift log, reference at the bottom. */
+:root {
+  --bg: #F2F4F3;
+  --surface: #FFFFFF;
+  --line: #D8DEDB;
+  --fg: #16201D;
+  --muted: #5C6964;
+  --accent: #1F4FD1;
+  --accent-soft: #E3EAFB;
+  --deload: #C8352B;
+  --deload-soft: #F8E4E2;
+  --good: #1C7A4A;
+  --good-soft: #DDF0E5;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111715; --surface: #18201D; --line: #2C3633; --fg: #E6ECE9; --muted: #95A39D;
+    --accent: #7FA0FF; --accent-soft: #1E2A4A; --deload: #F0796E; --deload-soft: #3A1F1C;
+    --good: #5BCB8E; --good-soft: #17352A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111715; --surface: #18201D; --line: #2C3633; --fg: #E6ECE9; --muted: #95A39D;
+  --accent: #7FA0FF; --accent-soft: #1E2A4A; --deload: #F0796E; --deload-soft: #3A1F1C;
+  --good: #5BCB8E; --good-soft: #17352A; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; margin: 0; text-wrap: balance; letter-spacing: .01em; }
+h1 { font-size: 44px; line-height: 1; text-transform: uppercase; }
+h2 { font-size: 24px; text-transform: uppercase; }
+h3 { font-size: 19px; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px; }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
+.start { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.status { font-size: 13px; color: var(--muted); min-height: 1.5em; }
+.status.err { color: var(--deload); }
+input, textarea { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; }
+input:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 2px; }
+.stat .v { font-family: var(--display); font-size: 32px; font-weight: 700; line-height: 1.1; }
+.stat .s { font-size: 13px; color: var(--muted); }
+@media (max-width: 700px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.panel { display: grid; gap: 12px; }
+.chartbox { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; overflow-x: auto; }
+.chartbox svg { display: block; width: 100%; min-width: 520px; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 8px; margin-right: 6px; vertical-align: middle; border-radius: 2px; }
+.legend .l-band::before { background: var(--accent-soft); }
+.legend .l-line::before { background: var(--accent); height: 3px; }
+
+.blocks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 700px) { .blocks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.block { display: grid; gap: 8px; align-content: start; }
+.block .bt { font-size: 12px; color: var(--muted); }
+.block .bt b { color: var(--fg); font-weight: 600; display: block; }
+.weeks { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.wk { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 6px;
+  padding: 6px 0 5px; cursor: pointer; display: grid; gap: 3px; justify-items: center; font: inherit; }
+.wk .n { font-family: var(--display); font-weight: 700; font-size: 18px; line-height: 1; }
+.wk .bar { width: 70%; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.wk .bar i { display: block; height: 100%; background: var(--good); }
+.wk.deload .n { color: var(--deload); }
+.wk.complete { background: var(--good-soft); border-color: transparent; }
+.wk.current { box-shadow: inset 0 0 0 2px var(--fg); }
+.wk[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.wk[aria-pressed="true"] .n { color: var(--bg); }
+.wk[aria-pressed="true"] .bar { background: color-mix(in srgb, var(--bg) 35%, transparent); }
+.wk[aria-pressed="true"] .bar i { background: var(--bg); }
+.keyrow { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--muted); }
+
+.week { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 20px; }
+.weekhead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: start; }
+.weekhead h2 { font-size: 34px; }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.pill.deload { background: var(--deload-soft); color: var(--deload); }
+.pill.good { background: var(--good-soft); color: var(--good); }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; font-size: 13px; }
+.targets div { border-left: 2px solid var(--line); padding-left: 10px; min-width: 0; }
+.targets b { display: block; font-size: 14px; }
+@media (max-width: 640px) { .targets { grid-template-columns: 1fr; } }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+.sessions { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.sess { display: grid; grid-template-columns: auto 44px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.sess input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--good); cursor: pointer; }
+.sess .d { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding-top: 2px; }
+.sess .t b { display: block; font-weight: 600; }
+.sess .t span { font-size: 13px; color: var(--muted); }
+.sess.done .t b { text-decoration: line-through; text-decoration-color: var(--muted); }
+.sess.rest { cursor: default; color: var(--muted); }
+.lifts { display: grid; gap: 16px; }
+.lift { display: grid; gap: 6px; }
+.lift .lh { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.lift .lh span { font-size: 13px; color: var(--muted); }
+.fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fields label, .metrics label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+.fields input, .metrics input { width: 100%; min-width: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.e1rm { font-size: 12px; color: var(--muted); }
+.metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+textarea { width: 100%; min-height: 70px; resize: vertical; }
+.ref { display: grid; gap: 10px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0 16px; }
+summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
+details[open] summary { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+details .body { padding-bottom: 14px; display: grid; gap: 14px; }
+.tpl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 640px) { .tpl { grid-template-columns: 1fr; } }
+.tpl ol { margin: 6px 0 0; padding-left: 20px; font-size: 14px; }
+.tpl li span { color: var(--muted); font-family: var(--mono); font-size: 12.5px; }
+.rules { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 70ch; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 460px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+td.num { white-space: nowrap; }
+tr.dl td { color: var(--deload); }
+@media (prefers-reduced-motion: no-preference) { .wk, .sess { transition: background-color .15s, color .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">20-week cut · 190 lb start · bench 280 / squat 350</div>
+      <h1>Lean-Out 20</h1>
+      <p>Tick off each session, log your top sets and weekly averages. Your entries save automatically on this device. Export a backup to move them to another browser.</p>
+    </div>
+    <div class="start">
+      <label for="startDate">Week 1 starts on</label>
+      <input type="date" id="startDate">
+      <div class="status" id="status" role="status">Loading your log…</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="exportBtn">Export backup</button><button type="button" id="importBtn">Import backup</button><input type="file" id="importFile" accept="application/json,.json" hidden></div>
+    </div>
+  </header>
+
+  <section class="stats" aria-label="Summary">
+    <div class="stat"><span class="eyebrow">Current week</span><span class="v num" id="stWeek">1</span><span class="s" id="stWeekS">Block 1 · Volume</span></div>
+    <div class="stat"><span class="eyebrow">Sessions done</span><span class="v num" id="stSess">0</span><span class="s">of 120 planned</span></div>
+    <div class="stat"><span class="eyebrow">Bodyweight</span><span class="v num" id="stBw">190</span><span class="s" id="stBwS">No weekly average logged yet</span></div>
+    <div class="stat"><span class="eyebrow">Latest est. 1RM</span><span class="v num" id="stE1">280 / 350</span><span class="s" id="stE1S">Bench / squat, from your max</span></div>
+  </section>
+
+  <section class="panel" aria-labelledby="bwTitle">
+    <h2 id="bwTitle">Bodyweight trend</h2>
+    <div class="chartbox"><svg id="chart" viewBox="0 0 720 240" role="img" aria-label="Weekly average bodyweight against the target loss band"></svg></div>
+    <div class="legend"><span class="l-band">Target: lose 0.5–1 lb per week</span><span class="l-line">Your weekly average</span></div>
+  </section>
+
+  <section class="panel" aria-labelledby="planTitle">
+    <h2 id="planTitle">The 20 weeks</h2>
+    <div class="blocks" id="blocks"></div>
+    <div class="keyrow"><span>Red number = deload week</span><span>Green = 6 of 6 sessions done</span><span>Outlined = this week</span></div>
+  </section>
+
+  <section class="week" id="week" aria-live="polite">
+    <div class="weekhead">
+      <div>
+        <div class="eyebrow" id="wkBlock">Block 1 · Volume</div>
+        <h2 id="wkTitle">Week 1</h2>
+        <div class="pills" id="wkPills"></div>
+      </div>
+      <div class="eyebrow" id="wkDates"></div>
+    </div>
+    <div class="targets">
+      <div><span class="eyebrow">Nutrition</span><b id="tgKcal">2,350–2,400 kcal</b><span>190 g protein</span></div>
+      <div><span class="eyebrow">Conditioning</span><b id="tgCond">8k steps/day</b><span id="tgCondS">2× 30 min LISS</span></div>
+      <div><span class="eyebrow">Accessories</span><b id="tgAcc">As written</b><span id="tgAccS"></span></div>
+    </div>
+    <div class="cols">
+      <div class="panel">
+        <h3>Sessions</h3>
+        <div class="sessions" id="sessions"></div>
+      </div>
+      <div class="panel">
+        <h3>Top sets</h3>
+        <div class="lifts">
+          <div class="lift">
+            <div class="lh"><b>Bench press</b><span class="num" id="bTarget"></span></div>
+            <div class="fields">
+              <label>Weight (lb)<input id="f-bench-w" inputmode="decimal" data-k="bench.w"></label>
+              <label>Reps<input id="f-bench-r" inputmode="numeric" data-k="bench.r"></label>
+              <label>RPE<input id="f-bench-rpe" inputmode="decimal" data-k="bench.rpe"></label>
+            </div>
+            <div class="e1rm num" id="bE1"></div>
+          </div>
+          <div class="lift">
+            <div class="lh"><b>Back squat</b><span class="num" id="sTarget"></span></div>
+            <div class="fields">
+              <label>Weight (lb)<input id="f-squat-w" inputmode="decimal" data-k="squat.w"></label>
+              <label>Reps<input id="f-squat-r" inputmode="numeric" data-k="squat.r"></label>
+              <label>RPE<input id="f-squat-rpe" inputmode="decimal" data-k="squat.rpe"></label>
+            </div>
+            <div class="e1rm num" id="sE1"></div>
+          </div>
+        </div>
+        <h3>Weekly averages</h3>
+        <div class="metrics">
+          <label>Bodyweight (lb)<input id="f-bw" inputmode="decimal" data-k="bw"></label>
+          <label>Calories<input id="f-kcal" inputmode="numeric" data-k="kcal"></label>
+          <label>Steps/day<input id="f-steps" inputmode="numeric" data-k="steps"></label>
+        </div>
+        <label class="eyebrow" for="f-notes">Notes</label>
+        <textarea id="f-notes" data-k="notes" placeholder="Sleep, energy, aches, what to change next week"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="ref" aria-labelledby="refTitle">
+    <h2 id="refTitle">Reference</h2>
+    <details>
+      <summary>Main lift progression (all 20 weeks)</summary>
+      <div class="body"><div class="tablewrap"><table id="progTable"><thead><tr><th>Wk</th><th>Block</th><th>Sets × reps</th><th>%1RM</th><th>Bench</th><th>Squat</th></tr></thead><tbody></tbody></table></div></div>
+    </details>
+    <details>
+      <summary>Day templates</summary>
+      <div class="body tpl">
+        <div><h3>Upper A · Strength</h3><ol>
+          <li>Bench press <span>see week</span></li><li>Weighted pull-ups <span>4×5–6</span></li><li>Standing OHP <span>3×6</span></li>
+          <li>Chest-supported row <span>3×8–10</span></li><li>Dips <span>2×AMRAP, 1–2 RIR</span></li><li>Hammer curls <span>3×10</span></li></ol></div>
+        <div><h3>Lower A · Strength</h3><ol>
+          <li>Back squat <span>see week</span></li><li>Romanian deadlift <span>3×6–8</span></li><li>Bulgarian split squat <span>3×8/leg</span></li>
+          <li>Leg curl <span>3×10–12</span></li><li>Hanging leg raise <span>3×12</span></li></ol></div>
+        <div><h3>Upper B · Hypertrophy</h3><ol>
+          <li>Incline DB press <span>4×8–12</span></li><li>Lat pulldown <span>4×10–12</span></li><li>Seated cable row <span>3×10–12</span></li>
+          <li>Lateral raise <span>4×15–20</span></li><li>Cable fly <span>3×12–15</span></li><li>Pushdown + incline curl <span>3×12 each</span></li><li>Face pull <span>3×15</span></li></ol></div>
+        <div><h3>Lower B · Hypertrophy</h3><ol>
+          <li>Trap-bar or conventional deadlift <span>see week</span></li><li>Hack squat or leg press <span>3×10–12</span></li><li>Walking lunge <span>3×12/leg</span></li>
+          <li>Seated leg curl <span>3×12–15</span></li><li>Standing calf raise <span>4×12–15</span></li><li>Ab wheel or cable crunch <span>3×12</span></li></ol></div>
+      </div>
+    </details>
+    <details>
+      <summary>Nutrition and adjustment rules</summary>
+      <div class="body"><ul class="rules">
+        <li>Maintenance is roughly 2,800–2,900 kcal. Confirm it with 1–2 weeks of tracking.</li>
+        <li>Cut target: 2,350–2,400 kcal. Protein 190 g, fat 65–75 g, carbs fill the rest (mostly around training).</li>
+        <li>Aim to lose 0.5–1 lb per week, judged by the weekly average of daily weigh-ins.</li>
+        <li>Stalled under 0.5 lb/week for 2 weeks: cut 150–200 kcal from carbs or add 2k daily steps. Change one thing at a time.</li>
+        <li>Main lifts down more than 5% for 2+ weeks: you're losing too fast. Add 100–200 kcal back.</li>
+        <li>Week 10 is a diet break at maintenance (about 2,800 kcal).</li>
+        <li>Sleep 7–9 hours. Creatine 5 g/day.</li>
+        <li>After week 20, reverse diet: add 100–150 kcal per week until you're back at maintenance.</li>
+      </ul></div>
+    </details>
+  </section>
+</div>
+
+<script>
+(function () {
+  const BLOCKS = { 1: "Volume", 2: "Strength-Hypertrophy", 3: "Strength", 4: "Maintain / Peak" };
+  const P = [
+    [1,1,"4×8",67.5,190,235],[2,1,"4×8",70,195,245],[3,1,"4×7",72.5,205,255],[4,1,"4×6",75,210,265],[5,1,"3×5",60,170,210,"deload"],
+    [6,2,"5×5",75,210,265],[7,2,"5×5",77.5,215,270],[8,2,"5×4",80,225,280],[9,2,"4×4",82.5,230,290],[10,2,"3×5",60,170,210,"break"],
+    [11,3,"4×3",82.5,230,290],[12,3,"4×3",85,240,300],[13,3,"3×3",87.5,245,305],[14,3,"3×2",90,250,315],[15,3,"3×3",65,180,230,"deload"],
+    [16,4,"3×3",85,240,300],[17,4,"3×2",87.5,245,305],[18,4,"2×2",90,250,315],[19,4,"3×1",92.5,260,325],[20,4,"Work up to a heavy single",null,280,350,"test"]
+  ].map(a => ({ n:a[0], b:a[1], sets:a[2], pct:a[3], bench:a[4], squat:a[5], kind:a[6] || "" }));
+  const isDeload = w => w.kind === "deload" || w.kind === "break";
+
+  function cond(n) {
+    if (n <= 5) return { steps: 8000, title: "8k steps/day", detail: "2× 30 min LISS", wed: "LISS 30 min + core", sat: "LISS 30 min" };
+    if (n <= 10) return { steps: 9000, title: "9k steps/day", detail: "2× 35 min LISS", wed: "LISS 35 min + core", sat: "LISS 35 min" };
+    if (n <= 15) return { steps: 10000, title: "10k steps/day", detail: "1× LISS + 1× intervals", wed: "LISS 35 min + core", sat: "Intervals: 10× 30s hard / 90s easy (bike or rower)" };
+    return { steps: 10000, title: "10k+ steps/day", detail: "2× LISS, intervals if loss stalls", wed: "LISS 35 min + core", sat: "LISS 35 min (+ intervals if stalled)" };
+  }
+  function acc(w) {
+    if (isDeload(w)) return ["Half the sets", "Usual weights, nothing hard"];
+    if (w.n === 20) return ["Light, 2 sets each", "Save energy for the singles"];
+    if (w.b <= 2) return ["As written", "Add a rep or a little weight each week"];
+    if (w.b === 3) return ["Drop one set each", "Keep the weights the same"];
+    return ["About 2 sets each", "Hold strength, don't chase volume"];
+  }
+  function dead(w) {
+    if (isDeload(w)) return "Deadlift 3×3, light";
+    if (w.n === 20) return "Deadlift: optional heavy single or skip";
+    return ["", "Deadlift 4×5 @ RPE 7", "Deadlift 4×4 @ RPE 7–8", "Deadlift 3×3 @ RPE 8", "Deadlift 3×2 @ RPE 8"][w.b];
+  }
+  const main = (w, lift) => w.n === 20 ? `Heavy single, goal ${w[lift]}` : `${w.sets} @ ${w[lift]}`;
+  function sessions(w) {
+    const c = cond(w.n);
+    return [
+      ["mon", "Mon", "Upper A · Strength", "Bench " + main(w, "bench")],
+      ["tue", "Tue", "Lower A · Strength", "Squat " + main(w, "squat")],
+      ["wed", "Wed", "Conditioning", c.wed],
+      ["thu", "Thu", "Upper B · Hypertrophy", "Incline DB, pulldown, rows, delts, arms"],
+      ["fri", "Fri", "Lower B · Hypertrophy", dead(w)],
+      ["sat", "Sat", "Conditioning", c.sat]
+    ];
+  }
+  const DAYS = ["mon","tue","wed","thu","fri","sat"];
+
+  const blank = () => ({ s: {}, bench: {}, squat: {}, bw: "", kcal: "", steps: "", notes: "" });
+  const state = {}; for (let i = 1; i <= 20; i++) state[i] = blank();
+  let startDate = "";
+  let selected = 1;
+  let db = null;
+  const STORAGE_KEY = "leanout20-v1";
+  const pad = n => String(n).padStart(2, "0");
+  const $ = id => document.getElementById(id);
+  const statusEl = $("status");
+  function setStatus(t, err) { statusEl.textContent = t; statusEl.classList.toggle("err", !!err); }
+
+  const num = v => { const x = parseFloat(String(v).replace(",", ".")); return isFinite(x) ? x : null; };
+  const e1rm = (w, r) => (w && r && r > 0 && r <= 12) ? Math.round(w * (1 + r / 30)) : null;
+  const doneCount = n => DAYS.filter(d => state[n].s && state[n].s[d]).length;
+
+  function currentWeek() {
+    if (startDate) {
+      const s = new Date(startDate + "T00:00:00");
+      const days = Math.floor((Date.now() - s.getTime()) / 864e5);
+      if (!isNaN(days)) return Math.min(20, Math.max(1, Math.floor(days / 7) + 1));
+    }
+    for (let i = 1; i <= 20; i++) if (doneCount(i) < 6) return i;
+    return 20;
+  }
+  function weekDates(n) {
+    if (!startDate) return "";
+    const s = new Date(startDate + "T00:00:00"); if (isNaN(s)) return "";
+    const a = new Date(s.getTime() + (n - 1) * 7 * 864e5), b = new Date(a.getTime() + 6 * 864e5);
+    const f = d => d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return f(a) + " – " + f(b);
+  }
+
+  // Week grid
+  const blocksEl = $("blocks");
+  for (let b = 1; b <= 4; b++) {
+    const el = document.createElement("div"); el.className = "block";
+    const ws = P.filter(w => w.b === b);
+    el.innerHTML = `<div class="bt"><b>Block ${b} · ${BLOCKS[b]}</b>Weeks ${ws[0].n}–${ws[ws.length-1].n}</div><div class="weeks"></div>`;
+    const grid = el.querySelector(".weeks");
+    ws.forEach(w => {
+      const btn = document.createElement("button");
+      btn.type = "button"; btn.className = "wk" + (isDeload(w) ? " deload" : ""); btn.id = "wk" + w.n;
+      btn.setAttribute("aria-label", "Week " + w.n);
+      btn.innerHTML = `<span class="n num">${w.n}</span><span class="bar"><i style="width:0%"></i></span>`;
+      btn.addEventListener("click", () => { selected = w.n; renderWeek(); renderGrid(); });
+      grid.appendChild(btn);
+    });
+    blocksEl.appendChild(el);
+  }
+  // Progression table
+  $("progTable").querySelector("tbody").innerHTML = P.map(w =>
+    `<tr class="${isDeload(w) ? "dl" : ""}"><td class="num">${w.n}</td><td>${BLOCKS[w.b]}${w.kind === "deload" ? " · deload" : w.kind === "break" ? " · deload + diet break" : w.kind === "test" ? " · test" : ""}</td><td>${w.sets}</td><td class="num">${w.pct ? w.pct + "%" : "—"}</td><td class="num">${w.bench}</td><td class="num">${w.squat}</td></tr>`).join("");
+
+  function renderGrid() {
+    const cur = currentWeek();
+    P.forEach(w => {
+      const btn = $("wk" + w.n), c = doneCount(w.n);
+      btn.querySelector("i").style.width = (c / 6 * 100) + "%";
+      btn.classList.toggle("complete", c === 6);
+      btn.classList.toggle("current", w.n === cur);
+      btn.setAttribute("aria-pressed", w.n === selected ? "true" : "false");
+      btn.title = `Week ${w.n}: ${c}/6 sessions`;
+    });
+  }
+
+  function renderSummary() {
+    const cur = currentWeek(), w = P[cur - 1];
+    $("stWeek").textContent = cur;
+    $("stWeekS").textContent = `Block ${w.b} · ${BLOCKS[w.b]}${isDeload(w) ? " · deload" : ""}`;
+    let total = 0; for (let i = 1; i <= 20; i++) total += doneCount(i);
+    $("stSess").textContent = total;
+    let lastBw = null, lastBwWk = 0;
+    for (let i = 1; i <= 20; i++) { const v = num(state[i].bw); if (v) { lastBw = v; lastBwWk = i; } }
+    if (lastBw) {
+      $("stBw").textContent = lastBw.toFixed(1);
+      const d = lastBw - 190;
+      $("stBwS").textContent = `Week ${lastBwWk} avg · ${d <= 0 ? "−" : "+"}${Math.abs(d).toFixed(1)} lb from start`;
+    } else { $("stBw").textContent = "190"; $("stBwS").textContent = "Starting weight. Log a weekly average."; }
+    let be = null, se = null, bw = 0, sw = 0;
+    for (let i = 1; i <= 20; i++) {
+      const b = e1rm(num(state[i].bench.w), num(state[i].bench.r)); if (b) { be = b; bw = i; }
+      const s = e1rm(num(state[i].squat.w), num(state[i].squat.r)); if (s) { se = s; sw = i; }
+    }
+    $("stE1").textContent = `${be || 280} / ${se || 350}`;
+    $("stE1S").textContent = (be || se) ? `Bench / squat, from your latest top sets` : "Bench / squat, from your max";
+  }
+
+  function renderChart() {
+    const svg = $("chart"), W = 720, H = 240, L = 44, R = 16, T = 14, B = 30;
+    const pts = []; for (let i = 1; i <= 20; i++) { const v = num(state[i].bw); if (v) pts.push([i, v]); }
+    let lo = 168, hi = 194;
+    pts.forEach(p => { lo = Math.min(lo, Math.floor(p[1] - 2)); hi = Math.max(hi, Math.ceil(p[1] + 2)); });
+    const x = w => L + (w / 20) * (W - L - R), y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+    let g = "";
+    for (let v = Math.ceil(lo / 4) * 4; v <= hi; v += 4)
+      g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">${v}</text>`;
+    for (let w = 0; w <= 20; w += 5)
+      g += `<text x="${x(w)}" y="${H - 10}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--mono)">${w === 0 ? "start" : "wk " + w}</text>`;
+    g += `<polygon points="${x(0)},${y(190)} ${x(20)},${y(180)} ${x(20)},${y(170)}" fill="var(--accent-soft)"/>`;
+    g += `<rect x="${x(9.5)}" y="${T}" width="${x(10.5) - x(9.5)}" height="${H - T - B}" fill="var(--deload-soft)" opacity=".7"/><text x="${x(10)}" y="${T + 12}" text-anchor="middle" font-size="10" fill="var(--deload)">diet break</text>`;
+    const all = [[0, 190]].concat(pts);
+    if (all.length > 1) g += `<polyline points="${all.map(p => x(p[0]) + "," + y(p[1])).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    all.forEach((p, i) => {
+      const last = i === all.length - 1;
+      g += `<circle cx="${x(p[0])}" cy="${y(p[1])}" r="${last ? 5 : 3.5}" fill="${last ? "var(--accent)" : "var(--surface)"}" stroke="var(--accent)" stroke-width="2"><title>${p[0] ? "Week " + p[0] : "Start"}: ${p[1]} lb</title></circle>`;
+      if (last && pts.length) g += `<text x="${Math.min(x(p[0]) + 9, W - R - 40)}" y="${y(p[1]) - 9}" font-size="12" font-weight="600" fill="var(--fg)" font-family="var(--mono)">${p[1]}</text>`;
+    });
+    svg.innerHTML = g;
+  }
+
+  const sessEl = $("sessions");
+  function renderWeek() {
+    const w = P[selected - 1], st = state[selected], c = cond(w.n), a = acc(w);
+    $("wkTitle").textContent = "Week " + w.n;
+    $("wkBlock").textContent = `Block ${w.b} · ${BLOCKS[w.b]}`;
+    $("wkDates").textContent = weekDates(w.n);
+    const pills = [];
+    if (w.kind === "deload") pills.push(`<span class="pill deload">Deload</span>`);
+    if (w.kind === "break") pills.push(`<span class="pill deload">Deload + diet break</span>`);
+    if (w.kind === "test") pills.push(`<span class="pill">Test week</span>`);
+    if (w.pct) pills.push(`<span class="pill">${w.sets} @ ${w.pct}%</span>`);
+    const dc = doneCount(w.n); pills.push(`<span class="pill${dc === 6 ? " good" : ""}">${dc}/6 sessions</span>`);
+    $("wkPills").innerHTML = pills.join("");
+    $("tgKcal").textContent = w.kind === "break" ? "About 2,800 kcal (maintenance)" : "2,350–2,400 kcal";
+    $("tgCond").textContent = c.title; $("tgCondS").textContent = c.detail;
+    $("tgAcc").textContent = a[0]; $("tgAccS").textContent = a[1];
+    sessEl.innerHTML = "";
+    sessions(w).forEach(([k, d, t, sub]) => {
+      const lab = document.createElement("label");
+      const on = !!(st.s && st.s[k]);
+      lab.className = "sess" + (on ? " done" : "");
+      lab.innerHTML = `<input type="checkbox" id="chk-${k}"${on ? " checked" : ""}><span class="d">${d}</span><span class="t"><b></b><span></span></span>`;
+      lab.querySelector("b").textContent = t; lab.querySelector(".t span").textContent = sub;
+      lab.querySelector("input").addEventListener("change", e => {
+        st.s = Object.assign({}, st.s, { [k]: e.target.checked });
+        lab.classList.toggle("done", e.target.checked);
+        queueSave(w.n, 0); renderGrid(); renderSummary();
+        const dc2 = doneCount(w.n); const p = $("wkPills").lastElementChild;
+        p.textContent = dc2 + "/6 sessions"; p.classList.toggle("good", dc2 === 6);
+      });
+      sessEl.appendChild(lab);
+    });
+    const rest = document.createElement("div"); rest.className = "sess rest";
+    rest.innerHTML = `<span style="width:20px"></span><span class="d">Sun</span><span class="t"><b>Off</b><span>Walk, hit your step target</span></span>`;
+    sessEl.appendChild(rest);
+    $("bTarget").textContent = "Target: " + main(w, "bench");
+    $("sTarget").textContent = "Target: " + main(w, "squat");
+    fillInputs();
+  }
+  function fillInputs() {
+    const st = state[selected];
+    document.querySelectorAll("[data-k]").forEach(inp => {
+      const [a, b] = inp.dataset.k.split(".");
+      const v = b ? (st[a] || {})[b] : st[a];
+      inp.value = v == null ? "" : v;
+    });
+    updateE1();
+  }
+  function updateE1() {
+    const st = state[selected];
+    [["bench", "bE1"], ["squat", "sE1"]].forEach(([l, id]) => {
+      const e = e1rm(num(st[l].w), num(st[l].r));
+      $(id).textContent = e ? `Estimated 1RM ≈ ${e} lb` : "";
+    });
+  }
+  document.querySelectorAll("[data-k]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const st = state[selected], [a, b] = inp.dataset.k.split(".");
+      if (b) st[a] = Object.assign({}, st[a], { [b]: inp.value }); else st[a] = inp.value;
+      updateE1(); renderSummary(); renderChart();
+      queueSave(selected, 800);
+    });
+  });
+
+  // Standalone persistence: save to this browser on this device.
+  let saveTimer;
+  function saveLocal() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ startDate, weeks: state }));
+      setStatus("Saved on this device");
+    } catch (e) { setStatus("Unable to save. Check browser storage settings.", true); }
+  }
+  function queueSave() {
+    setStatus("Saving…");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveLocal, 250);
+  }
+  $("startDate").addEventListener("change", e => {
+    startDate = e.target.value || "";
+    renderAll(); queueSave();
+  });
+  function renderAll() { renderGrid(); renderSummary(); renderChart(); renderWeek(); }
+  function loadLocal() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (saved && typeof saved === "object") {
+        startDate = typeof saved.startDate === "string" ? saved.startDate : "";
+        $("startDate").value = startDate;
+        if (saved.weeks && typeof saved.weeks === "object") {
+          for (let n = 1; n <= 20; n++) {
+            const v = saved.weeks[n];
+            if (v && typeof v === "object") state[n] = {
+              s: v.s || {}, bench: v.bench || {}, squat: v.squat || {},
+              bw: v.bw ?? "", kcal: v.kcal ?? "", steps: v.steps ?? "", notes: v.notes ?? ""
+            };
+          }
+        }
+      }
+      selected = currentWeek(); renderAll();
+      setStatus(saved ? "Saved log loaded from this device" : "Ready — your entries save on this device");
+    } catch (e) { renderAll(); setStatus("Could not load saved data.", true); }
+  }
+  $("exportBtn").addEventListener("click", () => {
+    clearTimeout(saveTimer); saveLocal();
+    const blob = new Blob([JSON.stringify({ startDate, weeks: state, exportedAt: new Date().toISOString() }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "lean-out-20-backup.json"; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  $("importBtn").addEventListener("click", () => $("importFile").click());
+  $("importFile").addEventListener("change", async e => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      if (!data || !data.weeks || typeof data.weeks !== "object") throw Error("Invalid backup");
+      if (!confirm("Replace the current workout log with this backup?")) return;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ startDate: data.startDate || "", weeks: data.weeks }));
+      loadLocal(); setStatus("Backup imported and saved");
+    } catch (err) { setStatus("Import failed: invalid backup file", true); }
+    finally { e.target.value = ""; }
+  });
+  loadLocal();
+})();
+</script>
+
+</body></html>
